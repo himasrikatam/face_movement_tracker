@@ -1,0 +1,6 @@
+opencv-python
+mediapipe
+numpy
+flask
+flask-login
+flask_pymongo

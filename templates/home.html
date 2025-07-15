@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Home</title>
+</head>
+<body>
+    <h2>Welcome, {{ username }}</h2>
+    {% if message %}
+    <p style="color:green;">{{ message }}</p>
+    {% endif %}
+    <form action="{{ url_for('start_tracker') }}">
+        <button type="submit">Start Face Movement Tracker</button>
+    </form>
+    <br>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+<style>
+    *{
+        font-family: monospace;
+        background-color: black;
+    }
+    body{
+        color:white
+    }
+     input{
+    color: white;
+ }
+    button{
+    width: 15vw;
+    height: 8vh;
+    background-color: darkgray;
+    border-radius: 15px;
+    border: 1px solid white;
+    }
+    button:hover{
+        background-color: rgb(207, 207, 207);
+    }
+    a,p{
+    display: flex;
+    justify-content: center;  
+    }
+    form{
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    width: 20vw;
+    align-items: center;
+    margin: 5vw 79vw 5vh 79vh;
+    }
+    h2{
+    display: flex;
+    justify-content: center;
+    font-family: monospace;
+    }
+</style>
+</html>

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register</h2>
+    {% if message %}
+    <p style="color:red;">{{ message }}</p>
+    {% endif %}
+    <form method="POST">
+        Username: <input type="text" name="username" required><br>
+        Password: <input type="password" name="password" required><br>
+        <button type="submit">Register</button>
+    </form>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+</body>
+<style>
+       *{
+        font-family: monospace;
+        background-color: black;
+    }
+    body{
+        color:white
+    }
+     input{
+    color: white;
+ }
+    button{
+    width: 6vw;
+    height: 4vh;
+    background-color: darkgray;
+    border-radius: 15px;
+    border: 1px solid white;
+    }
+    button:hover{
+        background-color: rgb(207, 207, 207);
+    }
+    p{
+    display: flex;
+    justify-content: center;  
+    }
+    form{
+    justify-content: center;
+    display: flex;
+    flex-direction: column;
+    width: 20vw;
+    align-items: center;
+    margin: 5vw 79vw 5vh 79vh;
+    }
+    h2{
+    display: flex;
+    justify-content: center;
+    font-family: monospace;
+    }
+</style>
+</html>
