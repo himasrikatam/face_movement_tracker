@@ -6,3 +6,4 @@ flask-login
 flask_pymongo
 werkzeug
 python-dotenv
+gunicorn
