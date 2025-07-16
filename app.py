@@ -15,18 +15,19 @@ cap = cv2.VideoCapture(0) #starts webcam
 while cap.isOpened():
     success, image = cap.read()
     start = time.time()
+    # Preprocess Image for MediaPipe
     # Flip the image horizontally for a later selfie-view display
     # convert the BGR image to RGB as mediapipe uses RGB images but OpenCV uses BGR images
-    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB)
-    # why???????//
+    image = cv2.cvtColor(cv2.flip(image, 1), cv2.COLOR_BGR2RGB) # 0: vertical flip, 1: horizontal flip, -1: both flips
+    #first reads the images only, after detecting the landmarks it allows writing on the image(True)
     image.flags.writeable = False
-    # get the face mesh results
+    # get the face mesh results (Detects face landmarks)
     results = face_mesh.process(image)
-    # To improve performance
-    image.flags.writeable = False
+    # To improve performance (allows writing on the image(True))
+    image.flags.writeable = True  
     # convert the RGB image to BGR so opencv can display it
     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-    img_h, img_w, img_c = image.shape
+    img_h, img_w, img_c = image.shape # Gets image dimensions
     face_3d = []
     face_2d = []
     # step4: get the face mesh landmarks
@@ -47,26 +48,39 @@ while cap.isOpened():
             face_3d = np.array(face_3d, dtype=np.float32)
             # solve PnP=> estimate the pose of the face
             focal_length = 1 * img_w
+            # Camera intrinsic matrix used - Converts 3D world points → 2D image pixels.
             cam_matrix= np.array([[focal_length, 0, img_w / 2],
                                        [0, focal_length, img_h / 2],
                                        [0, 0, 1]])
-            dist_matrix = np.zeros((4, 1), dtype=np.float64)
-            success, rotation_vector, translation_vector = cv2.solvePnP(face_3d, face_2d, cam_matrix, dist_matrix)    
-            # get the rotation matrix
-            rmat, jac = cv2.Rodrigues(rotation_vector)
+            dist_matrix = np.zeros((4, 1), dtype=np.float64) # distortion coefficients: lens distortions(0 = ideal camera lens)
+            # solvePnP: estimate the 3D pose (rotation + translation) of an object from its 2D image points
+            success, rotation_vector, translation_vector = cv2.solvePnP(face_3d, face_2d, cam_matrix, dist_matrix)     # OUTPUT: 3x1 representation of rotation
+            # get the rotation matrix - Calculate Rotation Angles
+            rmat, jac = cv2.Rodrigues(rotation_vector) # converted to a 3x3 rotation matrix 
             # get angles
             angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rmat)
             # get y rotation degree
-            x = angles[0] * 360
-            y = angles[1] * 360 
-            z = angles[2] * 360
+            x = angles[0] * 360 # pitch(up/down)
+            y = angles[1] * 360 # yaw(left/right)
+            z = angles[2] * 360 # roll(tilt)
             # see which direction the face is looking
+            # Check YAW (left/right)
             if y < -10:
                 text = "Looking left"
             elif y > 10:
                 text = "Looking right"
             else:
                 text = "Forward"
+            # Check PITCH (up/down)
+            if x < -15:
+              text = "Looking Down"
+            elif x > 15:
+               text = "Looking Up"
+            # Check ROLL (tilt)
+            if z < -10:
+              text = "Head Tilted Right"
+            elif z > 10:
+             text = "Head Tilted Left"
             # display the nose direction
             nose_3d_projection, jacobian = cv2.projectPoints(nose_3d, rotation_vector, translation_vector, cam_matrix, dist_matrix)
             p1 = (int(nose_2d[0]), int(nose_2d[1]))
@@ -83,14 +97,67 @@ while cap.isOpened():
         cv2.putText(image, f'FPS: {int(fps)}', (20, 450), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)   
         # draw the face mesh landmarks
         mp_drawing.draw_landmarks(
-           image=image,
+            image=image,
             landmark_list=face_landmarks,
             connections = mp_face_mesh.FACEMESH_TESSELATION,
             landmark_drawing_spec=drawing_spec,
             connection_drawing_spec=drawing_spec
         )
     cv2.imshow('Face Movement Tracker', image)
-    if cv2.waitKey(5) & 0xFF == 27:
+    if cv2.waitKey(5) & 0xFF == 27: # Checks for keyboard input every 5 milliseconds, 27=ASCII code for the ESC key. 0xFF is hexadecimal for 255 & 0xFF is used to mask the last 8 bits of the integer.
         break
 cap.release()
 cv2.destroyAllWindows()
+
+    #       ┌───────────────────────────────────────┐
+    #       │        Start Webcam (0)               │
+    #       └───────────────────────┬───────────────┘
+    #                               │
+    #                               ▼
+    #       ┌───────────────────────────────────────┐
+    #       │    1. Capture Frame                   │
+    #       │    2. Flip Horizontally (Mirror)      │
+    #       │    3. Convert BGR → RGB               │
+    #       └───────────────────────┬───────────────┘
+    #                               │
+    #                               ▼
+    #       ┌───────────────────────────────────────┐
+    #       │    Detect Face Mesh?                  │
+    #       └───────────────────────┬───────────────┘
+    #                    ┌──────────┴──────────┐
+    #                    ▼                     ▼
+    #   ┌───────────────────────┐    ┌───────────────────────┐
+    #   │ No Face Found         │    │ Face Found            │
+    #   │ → Skip Frame          │    │ → Get Key Landmarks   │
+    #   └───────────────────────┘    │ (Nose, Eyes, Chin)    │
+    #                               └──────────┬──────────┘
+    #                                          │
+    #                                          ▼
+    #       ┌───────────────────────────────────────┐
+    #       │    1. Convert to 2D/3D Points        │
+    #       │    2. Calculate Head Pose (solvePnP) │
+    #       │    3. Get Rotation Angles (Yaw/Pitch/Roll) │
+    #       └───────────────────────┬───────────────┘
+    #                               │
+    #                               ▼
+    #       ┌───────────────────────────────────────┐
+    #       │ Check Direction:                      │
+    #       │ - Yaw (Left/Right)                   │
+    #       │ - Pitch (Up/Down)                    │
+    #       │ - Roll (Tilt)                        │
+    #       └───────────────────────┬───────────────┘
+    #                               │
+    #                               ▼
+    #       ┌───────────────────────────────────────┐
+    #       │ Display:                              │
+    #       │ 1. Direction Text                     │
+    #       │ 2. FPS Counter                        │
+    #       │ 3. Face Mesh (Optional)               │
+    #       └───────────────────────┬───────────────┘
+    #                               │
+    #                               ▼
+    #       ┌───────────────────────────────────────┐
+    #       │ Press ESC? → Yes: Exit                │
+    #       │       ↓                               │
+    #       │ No: Continue Loop                     │
+    #       └───────────────────────────────────────┘
