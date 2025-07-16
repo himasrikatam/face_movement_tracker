@@ -7,3 +7,4 @@ flask_pymongo
 werkzeug
 python-dotenv
 gunicorn
+flask_jwt_extended

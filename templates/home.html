@@ -8,6 +8,10 @@
     {% if message %}
     <p style="color:green;">{{ message }}</p>
     {% endif %}
+    {%if token %}
+    <p>Copy this JWT token and use it for accessing protected routes:</p>
+    <textarea cols="100" rows="4" style="margin-left: 20vw;" >{{ token }}</textarea>
+    {% endif %}
     <form action="{{ url_for('start_tracker') }}">
         <button type="submit">Start Face Movement Tracker</button>
     </form>
@@ -19,7 +23,7 @@
         font-family: monospace;
         background-color: black;
     }
-    body{
+    body,textarea{
         color:white
     }
      input{
