@@ -16,14 +16,15 @@ from flask_jwt_extended import (
 load_dotenv()
 
 app = Flask(__name__)
-app.config["JWT_SECRET_KEY"] = os.getenv('SECRET_KEY')
+app.config["JWT_SECRET_KEY"] = os.getenv('SECRET_KEY') # required because without this flask-jwt-extended will not work
 app.config["MONGO_URI"] = os.getenv('MONGO_URI')
 mongo = PyMongo(app)
 jwt = JWTManager(app)
 app.config.update({
-    "JWT_TOKEN_LOCATION": ["cookies"],  # Uses cookies instead of headers
+    "JWT_TOKEN_LOCATION": ["cookies"],  # Uses cookies instead of headers 
     "JWT_COOKIE_HTTPONLY": True,  # Sets HTTP-only flag for security (prevents JavaScript access)
-    "JWT_COOKIE_SECURE": False,  # Set to True in production with HTTPS
+    "JWT_COOKIE_SECURE": False,  # Set to True in production with HTTPS - not required in dev(localhost) as it doesnt use HTTPS but in prod it uses https 
+    # setting to false in prod can lead to security issues
 })
 
 @app.route('/')
@@ -83,14 +84,16 @@ def start_tracker():
 #     current_user = get_jwt_identity()
 #     return redirect(url_for('login'))
 def logout():
-    response = redirect(url_for('login'))
+    response = redirect(url_for('login')) # This IS a Response object, render_template returns a string(html) which needs make_response to convert it to a Response object
     unset_jwt_cookies(response)
     return response
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5050)
 
-
+# cookies => client side storage - small text files stored in the browser
+# session => server side storage - stores data on the server
+# headers => used to send additional information with the request/response Sent with every HTTP request/response
 # ┌───────────────────────────────────────────────────────────────────────┐
 # │                        JWT Authentication Flow                        │
 # └───────────────────────────────────────────────────────────────────────┘

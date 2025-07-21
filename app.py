@@ -7,11 +7,11 @@ import time
 # C:\Python310\python.exe -m venv venv
 # step2: mediapipe facemesh setup
 mp_face_mesh = mp.solutions.face_mesh # defining mediapipe face mesh module(468 landmarks)
-mp_drawing = mp.solutions.drawing_utils #draws dots(face mesh)
-face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) #
+mp_drawing = mp.solutions.drawing_utils # draws dots(face mesh)
+face_mesh = mp_face_mesh.FaceMesh(min_detection_confidence=0.5, min_tracking_confidence=0.5) # The model will register a face if it's at least 50% confident
 drawing_spec = mp_drawing.DrawingSpec(thickness=1, circle_radius=1) #thickness of the lines and radius of the dots
 # step3: start webcam and get the face mesh results
-cap = cv2.VideoCapture(0) #starts webcam
+cap = cv2.VideoCapture(0) #starts webcam 0-defualt camera, 1-external camera
 while cap.isOpened():
     success, image = cap.read()
     start = time.time()
@@ -30,10 +30,10 @@ while cap.isOpened():
     img_h, img_w, img_c = image.shape # Gets image dimensions
     face_3d = []
     face_2d = []
-    # step4: get the face mesh landmarks
+    # step 4: get the face mesh landmarks
     if results.multi_face_landmarks:
         for face_landmarks in results.multi_face_landmarks:
-            for idx, lm in enumerate(face_landmarks.landmark):
+            for idx, lm in enumerate(face_landmarks.landmark): #  pairs each landmark with its index (0 to 467)
             #   1:nose tip, 33: left eye, 61: right eye, 199: left ear, 263: right ear, 291: chin
               if idx == 33 or idx == 263 or idx == 1 or idx == 61 or idx == 291 or idx == 199:
                 if idx == 1:
@@ -59,7 +59,7 @@ while cap.isOpened():
             rmat, jac = cv2.Rodrigues(rotation_vector) # converted to a 3x3 rotation matrix 
             # get angles
             angles, mtxR, mtxQ, Qx, Qy, Qz = cv2.RQDecomp3x3(rmat)
-            # get y rotation degree
+            # get y rotation degree - In MediaPipe/OpenCV’s right-handed system: X = right (→), Y = down (↓), Z = outward (📷→)
             x = angles[0] * 360 # pitch(up/down)
             y = angles[1] * 360 # yaw(left/right)
             z = angles[2] * 360 # roll(tilt)
@@ -87,6 +87,16 @@ while cap.isOpened():
             p2 = (int(nose_2d[0]+y*10), int(nose_2d[1]-x*10))
             cv2.line(image, p1, p2, (255, 0, 0), 3)
             # add the text to the image on the top left corner
+        #     cv2.putText(
+        #     image,       # Image to draw on
+        #     text,        # Text string to display
+        #     (x, y),      # Bottom-left corner of text (20,50) 20 px from left, 50 px from to
+        #     font,        # Font type (e.g., cv2.FONT_HERSHEY_SIMPLEX)
+        #     fontScale,   # Font size multiplier eg. 2 => 2x default size
+        #     (B, G, R),   # Text color (Blue, Green, Red)
+        #     thickness,   # Thickness of text strokes
+        #     lineType     # Optional: Type of line (default=8)
+        #     )
             cv2.putText(image, text, (20, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 2)
             cv2.putText(image,"x: "+ str(np.round(x, 2)), (500, 50), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             cv2.putText(image,"y: "+ str(np.round(y, 2)), (500, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
